@@ -5,7 +5,7 @@ import { useUser, UserProfile } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, Trash2, UserX, Settings as SettingsIcon } from "lucide-react";
+import { Sun, Moon, Monitor, Trash2, UserX, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -182,6 +182,27 @@ export default function SettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {/* Log Out */}
+                    <div className="flex items-center justify-between p-4 rounded-lg border">
+                        <div>
+                            <h4 className="font-medium flex items-center gap-2">
+                                <LogOut className="h-4 w-4" />
+                                Log Out
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                                Sign out of your account on this device.
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => signOut({ redirectUrl: "/" })}
+                        >
+                            Log Out
+                        </Button>
+                    </div>
+
+                    <Separator />
+
                     {/* Deactivate Account */}
                     <div className="flex items-center justify-between p-4 rounded-lg border">
                         <div>

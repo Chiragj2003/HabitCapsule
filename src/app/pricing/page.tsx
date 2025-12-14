@@ -2,6 +2,17 @@ import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Zap, ArrowRight, Gift, X, Crown } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Pricing - Free Habit Tracker Plans",
+    description: "HabitCapsule pricing plans. Start free and get all Pro features at no cost. No credit card required. Build better habits with our free habit tracking app.",
+    keywords: ["habit tracker pricing", "free habit tracker", "habit app cost", "habit tracker subscription", "free productivity app"],
+    openGraph: {
+        title: "HabitCapsule Pricing - Free Habit Tracker",
+        description: "Get all Pro features completely free. No credit card required. Start building better habits today.",
+    },
+};
 
 export default function PricingPage() {
     return (

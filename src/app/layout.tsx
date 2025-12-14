@@ -53,10 +53,100 @@ const googleSans = localFont({
 })
 
 
+// SEO Configuration
+const siteConfig = {
+  name: "HabitCapsule",
+  description: "Build better habits with HabitCapsule - the free habit tracker app. Track daily habits, build streaks, visualize progress with beautiful analytics, and transform your life one habit at a time.",
+  url: "https://habitcapsule.app", // Update with your actual domain
+  ogImage: "/og-image.png", // Create and add this image
+  keywords: [
+    "habit tracker",
+    "habit tracking app",
+    "habit capsule",
+    "habitcapsule",
+    "daily habit tracker",
+    "free habit tracker",
+    "habit building app",
+    "streak tracker",
+    "habit analytics",
+    "productivity app",
+    "self improvement app",
+    "goal tracker",
+    "routine tracker",
+    "habit journal",
+    "morning routine tracker",
+    "wellness tracker",
+    "personal development",
+    "habit formation",
+    "build better habits",
+    "track habits online",
+    "habit monitoring",
+    "daily routine app",
+    "consistency tracker",
+  ],
+};
 
 export const metadata: Metadata = {
-  title: "HabitCapsule - Build Better Habits",
-  description: "Track your habits, analyze your progress, and build a better you",
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: "HabitCapsule - Free Habit Tracker App | Build Better Habits",
+    template: "%s | HabitCapsule",
+  },
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  authors: [{ name: "HabitCapsule Team" }],
+  creator: "HabitCapsule",
+  publisher: "HabitCapsule",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: "HabitCapsule - Free Habit Tracker App | Build Better Habits",
+    description: siteConfig.description,
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "HabitCapsule - Build Better Habits",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HabitCapsule - Free Habit Tracker App",
+    description: siteConfig.description,
+    images: [siteConfig.ogImage],
+    creator: "@habitcapsule", // Update with your Twitter handle
+  },
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  category: "Productivity",
+  verification: {
+    // Add your verification codes when you have them
+    // google: "your-google-verification-code",
+    // yandex: "your-yandex-verification-code",
+  },
+  other: {
+    "application-name": "HabitCapsule",
+    "apple-mobile-web-app-title": "HabitCapsule",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "theme-color": "#18181b",
+  },
 };
 
 export default function RootLayout({

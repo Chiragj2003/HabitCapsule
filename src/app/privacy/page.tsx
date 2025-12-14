@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Sparkles } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Privacy Policy",
+    description: "HabitCapsule Privacy Policy. Learn how we collect, use, and protect your personal data. Your privacy matters to us.",
+    robots: {
+        index: true,
+        follow: true,
+    },
+};
 
 export default function PrivacyPage() {
     return (

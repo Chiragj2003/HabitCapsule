@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Sparkles } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Terms of Service",
+    description: "HabitCapsule Terms of Service. Read our terms and conditions for using the habit tracking app.",
+    robots: {
+        index: true,
+        follow: true,
+    },
+};
 
 export default function TermsPage() {
     return (
