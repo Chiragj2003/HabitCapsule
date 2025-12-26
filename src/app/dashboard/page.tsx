@@ -181,7 +181,7 @@ export default function DashboardHome() {
             </div>
 
             {/* Quick Habits Section - Show on mobile */}
-            {habits && habits.length > 0 && (
+            {habits && habits.filter(h => h.active).length > 0 && (
                 <Card>
                     <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
                         <div className="flex items-center justify-between">
@@ -195,7 +195,7 @@ export default function DashboardHome() {
                     </CardHeader>
                     <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
                         <div className="space-y-2">
-                            {habits.slice(0, 5).map((habit) => (
+                            {habits.filter(h => h.active).slice(0, 5).map((habit) => (
                                 <div
                                     key={habit._id}
                                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"

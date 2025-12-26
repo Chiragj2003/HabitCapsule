@@ -70,7 +70,8 @@ export default function CalendarPage() {
     // Get completion data for each day
     const getDayData = (day: number) => {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const dayEntries = entries?.filter((e) => e.entryDate === dateStr) || [];
+        const activeHabitIds = new Set(habits?.map((h) => h._id) || []);
+        const dayEntries = entries?.filter((e) => e.entryDate === dateStr && activeHabitIds.has(e.habitId)) || [];
         const completed = dayEntries.filter((e) => e.completed).length;
         const total = habits?.length || 0;
         return { completed, total, rate: total > 0 ? completed / total : 0 };
@@ -255,7 +256,8 @@ function MiniCalendar({ date, clerkId }: { date: Date; clerkId: string }) {
 
     const getDayData = (day: number) => {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const dayEntries = entries?.filter((e) => e.entryDate === dateStr) || [];
+        const activeHabitIds = new Set(habits?.map((h) => h._id) || []);
+        const dayEntries = entries?.filter((e) => e.entryDate === dateStr && activeHabitIds.has(e.habitId)) || [];
         const completed = dayEntries.filter((e) => e.completed).length;
         const total = habits?.length || 0;
         return { completed, total, rate: total > 0 ? completed / total : 0 };

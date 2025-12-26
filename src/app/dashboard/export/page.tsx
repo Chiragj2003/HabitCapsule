@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { Download, FileSpreadsheet, FileText, Calendar as CalendarIcon, Filter, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,7 +127,7 @@ export default function ExportPage() {
     csvRows.push([""]);
     csvRows.push(["Habit Name", "Category", "Completed", "Total", "Completion Rate"]);
     Object.entries(habitStats).forEach(([habitId, s]) => {
-      const habit = habits?.find(h => h._id === habitId);
+      const habit = habitMap.get(habitId as Id<"habits">);
       const rate = ((s.completed / s.total) * 100).toFixed(1);
       csvRows.push([
         habit?.title || "Unknown",

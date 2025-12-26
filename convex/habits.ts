@@ -67,6 +67,24 @@ export const updateHabit = mutation({
         const habit = await ctx.db.get(habitId);
         if (!habit) throw new Error("Habit not found");
 
+        // If habit is being deactivated, mark today's entry as incomplete
+        if (args.active === false && habit.active === true) {
+            const today = new Date().toISOString().split("T")[0];
+            const todayEntry = await ctx.db
+                .query("habitEntries")
+                .withIndex("by_habit_date", (q) =>
+                    q.eq("habitId", habitId).eq("entryDate", today)
+                )
+                .first();
+
+            if (todayEntry && todayEntry.completed) {
+                await ctx.db.patch(todayEntry._id, {
+                    completed: false,
+                    updatedAt: Date.now(),
+                });
+            }
+        }
+
         await ctx.db.patch(habitId, {
             ...updates,
             updatedAt: Date.now(),

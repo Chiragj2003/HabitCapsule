@@ -150,3 +150,50 @@ export const getEntriesForHabit = query({
         return entries;
     },
 });
+
+// Cleanup mutation: Mark today's entries as incomplete for inactive habits
+export const cleanupInactiveHabitEntries = mutation({
+    args: { clerkId: v.string() },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+
+        if (!user) throw new Error("User not found");
+
+        // Get all inactive habits for this user
+        const allHabits = await ctx.db
+            .query("habits")
+            .withIndex("by_user", (q) => q.eq("userId", user._id))
+            .collect();
+
+        const inactiveHabits = allHabits.filter((h) => !h.active);
+        const inactiveHabitIds = new Set(inactiveHabits.map((h) => h._id));
+
+        // Get today's date
+        const today = new Date().toISOString().split("T")[0];
+
+        // Get today's entries
+        const todayEntries = await ctx.db
+            .query("habitEntries")
+            .withIndex("by_clerk_date", (q) =>
+                q.eq("clerkId", args.clerkId).eq("entryDate", today)
+            )
+            .collect();
+
+        // Mark entries for inactive habits as incomplete
+        let fixedCount = 0;
+        for (const entry of todayEntries) {
+            if (inactiveHabitIds.has(entry.habitId) && entry.completed) {
+                await ctx.db.patch(entry._id, {
+                    completed: false,
+                    updatedAt: Date.now(),
+                });
+                fixedCount++;
+            }
+        }
+
+        return { fixedCount };
+    },
+});

@@ -29,6 +29,7 @@ export const getStats = query({
             .collect();
 
         const activeHabits = habits.length;
+        const activeHabitIds = new Set(habits.map((h) => h._id));
 
         // Get today's date
         const today = new Date().toISOString().split("T")[0];
@@ -41,7 +42,10 @@ export const getStats = query({
             )
             .collect();
 
-        const completedToday = todayEntries.filter((e) => e.completed).length;
+        // Only count completions for active habits
+        const completedToday = todayEntries.filter(
+            (e) => e.completed && activeHabitIds.has(e.habitId)
+        ).length;
 
         // Calculate completion rate for last 7 days
         const last7Days: string[] = [];
@@ -56,8 +60,9 @@ export const getStats = query({
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .collect();
 
-        const relevantEntries = recentEntries.filter((e) =>
-            last7Days.includes(e.entryDate)
+        // Only count entries for active habits
+        const relevantEntries = recentEntries.filter(
+            (e) => last7Days.includes(e.entryDate) && activeHabitIds.has(e.habitId)
         );
 
         const possibleCompletions = activeHabits * 7;
@@ -176,18 +181,21 @@ export const getWeeklyTrend = query({
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .collect();
 
-        const activeHabits = habits.filter((h) => h.active).length;
+        const activeHabits = habits.filter((h) => h.active);
+        const activeHabitIds = new Set(activeHabits.map((h) => h._id));
 
         return days.map(({ date, dayName }) => {
-            const dayEntries = entries.filter((e) => e.entryDate === date);
+            const dayEntries = entries.filter(
+                (e) => e.entryDate === date && activeHabitIds.has(e.habitId)
+            );
             const completed = dayEntries.filter((e) => e.completed).length;
-            const rate = activeHabits > 0 ? Math.round((completed / activeHabits) * 100) : 0;
+            const rate = activeHabits.length > 0 ? Math.round((completed / activeHabits.length) * 100) : 0;
 
             return {
                 date,
                 dayName,
                 completed,
-                total: activeHabits,
+                total: activeHabits.length,
                 rate,
             };
         });
@@ -214,18 +222,21 @@ export const getMonthlyTrend = query({
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .collect();
 
-        const activeHabits = habits.filter((h) => h.active).length;
+        const activeHabits = habits.filter((h) => h.active);
+        const activeHabitIds = new Set(activeHabits.map((h) => h._id));
 
         return days.map((date) => {
-            const dayEntries = entries.filter((e) => e.entryDate === date);
+            const dayEntries = entries.filter(
+                (e) => e.entryDate === date && activeHabitIds.has(e.habitId)
+            );
             const completed = dayEntries.filter((e) => e.completed).length;
-            const rate = activeHabits > 0 ? Math.round((completed / activeHabits) * 100) : 0;
+            const rate = activeHabits.length > 0 ? Math.round((completed / activeHabits.length) * 100) : 0;
 
             return {
                 date,
                 day: new Date(date).getDate(),
                 completed,
-                total: activeHabits,
+                total: activeHabits.length,
                 rate,
             };
         });
