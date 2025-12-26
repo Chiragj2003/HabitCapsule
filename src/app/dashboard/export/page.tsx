@@ -10,9 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -20,163 +20,163 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function ExportPage() {
-    const { user } = useUser();
-    const clerkId = user?.id || "";
+  const { user } = useUser();
+  const clerkId = user?.id || "";
 
-    const habits = useQuery(
-        api.habits.getHabits,
-        clerkId ? { clerkId } : "skip"
-    );
+  const habits = useQuery(
+    api.habits.getHabits,
+    clerkId ? { clerkId } : "skip"
+  );
 
-    // Insights data for PDF export
-    const stats = useQuery(api.analytics.getStats, clerkId ? { clerkId } : "skip");
-    const weeklyTrend = useQuery(api.analytics.getWeeklyTrend, clerkId ? { clerkId } : "skip");
-    const categoryBreakdown = useQuery(api.analytics.getCategoryBreakdown, clerkId ? { clerkId } : "skip");
-    const habitStreaks = useQuery(api.analytics.getHabitStreaks, clerkId ? { clerkId } : "skip");
+  // Insights data for PDF export
+  const stats = useQuery(api.analytics.getStats, clerkId ? { clerkId } : "skip");
+  const weeklyTrend = useQuery(api.analytics.getWeeklyTrend, clerkId ? { clerkId } : "skip");
+  const categoryBreakdown = useQuery(api.analytics.getCategoryBreakdown, clerkId ? { clerkId } : "skip");
+  const habitStreaks = useQuery(api.analytics.getHabitStreaks, clerkId ? { clerkId } : "skip");
 
-    const [startDate, setStartDate] = useState<Date | undefined>(
-        new Date(new Date().setMonth(new Date().getMonth() - 1))
-    );
-    const [endDate, setEndDate] = useState<Date | undefined>(new Date());
-    const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
-    const [selectAll, setSelectAll] = useState(true);
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    new Date(new Date().setMonth(new Date().getMonth() - 1))
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(true);
 
-    const entries = useQuery(
-        api.entries.getEntriesInRange,
-        clerkId && startDate && endDate
-            ? {
-                clerkId,
-                startDate: startDate.toISOString().split("T")[0],
-                endDate: endDate.toISOString().split("T")[0],
-            }
-            : "skip"
-    );
+  const entries = useQuery(
+    api.entries.getEntriesInRange,
+    clerkId && startDate && endDate
+      ? {
+        clerkId,
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+      }
+      : "skip"
+  );
 
-    const handleSelectAll = (checked: boolean) => {
-        setSelectAll(checked);
-        if (checked) {
-            setSelectedHabits([]);
-        }
-    };
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedHabits([]);
+    }
+  };
 
-    const handleHabitToggle = (habitId: string, checked: boolean) => {
-        setSelectAll(false);
-        if (checked) {
-            setSelectedHabits([...selectedHabits, habitId]);
-        } else {
-            setSelectedHabits(selectedHabits.filter((id) => id !== habitId));
-        }
-    };
+  const handleHabitToggle = (habitId: string, checked: boolean) => {
+    setSelectAll(false);
+    if (checked) {
+      setSelectedHabits([...selectedHabits, habitId]);
+    } else {
+      setSelectedHabits(selectedHabits.filter((id) => id !== habitId));
+    }
+  };
 
-    const getFilteredEntries = () => {
-        if (!entries || !habits) return [];
+  const getFilteredEntries = () => {
+    if (!entries || !habits) return [];
 
-        const habitIds = selectAll
-            ? habits.map((h) => h._id)
-            : selectedHabits;
+    const habitIds = selectAll
+      ? habits.map((h) => h._id)
+      : selectedHabits;
 
-        return entries.filter((e) => habitIds.includes(e.habitId));
-    };
+    return entries.filter((e) => habitIds.includes(e.habitId));
+  };
 
-    const exportAsCSV = () => {
-        const filteredEntries = getFilteredEntries();
-        if (filteredEntries.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
+  const exportAsCSV = () => {
+    const filteredEntries = getFilteredEntries();
+    if (filteredEntries.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
 
-        const habitMap = new Map(habits?.map((h) => [h._id, h]) || []);
+    const habitMap = new Map(habits?.map((h) => [h._id, h]) || []);
 
-        // Calculate statistics for CSV header
-        const completedEntries = filteredEntries.filter(e => e.completed).length;
-        const completionRate = ((completedEntries / filteredEntries.length) * 100).toFixed(1);
-        const uniqueHabits = new Set(filteredEntries.map(e => e.habitId)).size;
-        const uniqueDates = new Set(filteredEntries.map(e => e.entryDate)).size;
+    // Calculate statistics for CSV header
+    const completedEntries = filteredEntries.filter(e => e.completed).length;
+    const completionRate = ((completedEntries / filteredEntries.length) * 100).toFixed(1);
+    const uniqueHabits = new Set(filteredEntries.map(e => e.habitId)).size;
+    const uniqueDates = new Set(filteredEntries.map(e => e.entryDate)).size;
 
-        // Calculate habit-specific stats
-        const habitStats: Record<string, { completed: number; total: number }> = {};
-        filteredEntries.forEach(entry => {
-            if (!habitStats[entry.habitId]) {
-                habitStats[entry.habitId] = { completed: 0, total: 0 };
-            }
-            habitStats[entry.habitId].total++;
-            if (entry.completed) habitStats[entry.habitId].completed++;
-        });
+    // Calculate habit-specific stats
+    const habitStats: Record<string, { completed: number; total: number }> = {};
+    filteredEntries.forEach(entry => {
+      if (!habitStats[entry.habitId]) {
+        habitStats[entry.habitId] = { completed: 0, total: 0 };
+      }
+      habitStats[entry.habitId].total++;
+      if (entry.completed) habitStats[entry.habitId].completed++;
+    });
 
-        const csvRows: string[][] = [];
+    const csvRows: string[][] = [];
 
-        // Summary section
-        csvRows.push(["===== HABITCAPSULE EXPORT SUMMARY ====="]);
-        csvRows.push([""]);
-        csvRows.push(["Export Date", format(new Date(), "MMMM d, yyyy 'at' h:mm a")]);
-        csvRows.push(["Exported By", user?.fullName || user?.emailAddresses[0]?.emailAddress || "Unknown"]);
-        csvRows.push(["Date Range", `${startDate ? format(startDate, "MMM d, yyyy") : "N/A"} to ${endDate ? format(endDate, "MMM d, yyyy") : "N/A"}`]);
-        csvRows.push([""]);
-        csvRows.push(["===== STATISTICS ====="]);
-        csvRows.push([""]);
-        csvRows.push(["Total Entries", filteredEntries.length.toString()]);
-        csvRows.push(["Completed Entries", completedEntries.toString()]);
-        csvRows.push(["Completion Rate", `${completionRate}%`]);
-        csvRows.push(["Total Habits Tracked", uniqueHabits.toString()]);
-        csvRows.push(["Days Covered", uniqueDates.toString()]);
-        csvRows.push([""]);
+    // Summary section
+    csvRows.push(["===== HABITCAPSULE EXPORT SUMMARY ====="]);
+    csvRows.push([""]);
+    csvRows.push(["Export Date", format(new Date(), "MMMM d, yyyy 'at' h:mm a")]);
+    csvRows.push(["Exported By", user?.fullName || user?.emailAddresses[0]?.emailAddress || "Unknown"]);
+    csvRows.push(["Date Range", `${startDate ? format(startDate, "MMM d, yyyy") : "N/A"} to ${endDate ? format(endDate, "MMM d, yyyy") : "N/A"}`]);
+    csvRows.push([""]);
+    csvRows.push(["===== STATISTICS ====="]);
+    csvRows.push([""]);
+    csvRows.push(["Total Entries", filteredEntries.length.toString()]);
+    csvRows.push(["Completed Entries", completedEntries.toString()]);
+    csvRows.push(["Completion Rate", `${completionRate}%`]);
+    csvRows.push(["Total Habits Tracked", uniqueHabits.toString()]);
+    csvRows.push(["Days Covered", uniqueDates.toString()]);
+    csvRows.push([""]);
 
-        // Habit-level summary
-        csvRows.push(["===== HABIT PERFORMANCE ====="]);
-        csvRows.push([""]);
-        csvRows.push(["Habit Name", "Category", "Completed", "Total", "Completion Rate"]);
-        Object.entries(habitStats).forEach(([habitId, s]) => {
-            const habit = habitMap.get(habitId);
-            const rate = ((s.completed / s.total) * 100).toFixed(1);
-            csvRows.push([
-                habit?.title || "Unknown",
-                habit?.category || "Uncategorized",
-                s.completed.toString(),
-                s.total.toString(),
-                `${rate}%`
-            ]);
-        });
-        csvRows.push([""]);
+    // Habit-level summary
+    csvRows.push(["===== HABIT PERFORMANCE ====="]);
+    csvRows.push([""]);
+    csvRows.push(["Habit Name", "Category", "Completed", "Total", "Completion Rate"]);
+    Object.entries(habitStats).forEach(([habitId, s]) => {
+      const habit = habits?.find(h => h._id === habitId);
+      const rate = ((s.completed / s.total) * 100).toFixed(1);
+      csvRows.push([
+        habit?.title || "Unknown",
+        habit?.category || "Uncategorized",
+        s.completed.toString(),
+        s.total.toString(),
+        `${rate}%`
+      ]);
+    });
+    csvRows.push([""]);
 
-        // Detailed entries
-        csvRows.push(["===== DETAILED ENTRIES ====="]);
-        csvRows.push([""]);
-        csvRows.push(["Date", "Habit", "Category", "Completed", "Value", "Notes"]);
+    // Detailed entries
+    csvRows.push(["===== DETAILED ENTRIES ====="]);
+    csvRows.push([""]);
+    csvRows.push(["Date", "Habit", "Category", "Completed", "Value", "Notes"]);
 
-        filteredEntries
-            .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
-            .forEach((entry) => {
-                const habit = habitMap.get(entry.habitId);
-                csvRows.push([
-                    entry.entryDate,
-                    habit?.title || "Unknown",
-                    habit?.category || "Uncategorized",
-                    entry.completed ? "Yes" : "No",
-                    entry.value?.toString() || "-",
-                    `"${(entry.notes || "-").replace(/"/g, '""')}"`,
-                ]);
-            });
+    filteredEntries
+      .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+      .forEach((entry) => {
+        const habit = habitMap.get(entry.habitId);
+        csvRows.push([
+          entry.entryDate,
+          habit?.title || "Unknown",
+          habit?.category || "Uncategorized",
+          entry.completed ? "Yes" : "No",
+          entry.value?.toString() || "-",
+          `"${(entry.notes || "-").replace(/"/g, '""')}"`,
+        ]);
+      });
 
-        const csvContent = csvRows.map((row) => row.join(",")).join("\n");
-        const filename = `habitcapsule-export-${format(new Date(), "yyyy-MM-dd")}.csv`;
-        downloadFile(csvContent, filename, "text/csv");
-        toast.success("CSV exported successfully with summary statistics!");
-    };
+    const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+    const filename = `habitcapsule-export-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    downloadFile(csvContent, filename, "text/csv");
+    toast.success("CSV exported successfully with summary statistics!");
+  };
 
-    const exportAsPDF = () => {
-        const filteredEntries = getFilteredEntries();
-        if (filteredEntries.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
+  const exportAsPDF = () => {
+    const filteredEntries = getFilteredEntries();
+    if (filteredEntries.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
 
-        const habitMap = new Map(habits?.map((h) => [h._id, h]) || []);
+    const habitMap = new Map(habits?.map((h) => [h._id, h]) || []);
 
-        // Calculate statistics
-        const completedEntries = filteredEntries.filter(e => e.completed).length;
-        const completionRate = ((completedEntries / filteredEntries.length) * 100).toFixed(1);
+    // Calculate statistics
+    const completedEntries = filteredEntries.filter(e => e.completed).length;
+    const completionRate = ((completedEntries / filteredEntries.length) * 100).toFixed(1);
 
-        const html = `
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -471,11 +471,11 @@ export default function ExportPage() {
       </thead>
       <tbody>
         ${filteredEntries
-                .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
-                .slice(0, 50)
-                .map((entry) => {
-                    const habit = habitMap.get(entry.habitId);
-                    return `
+        .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+        .slice(0, 50)
+        .map((entry) => {
+          const habit = habitMap.get(entry.habitId);
+          return `
           <tr>
             <td>${format(new Date(entry.entryDate), "MMM d, yyyy")}</td>
             <td>
@@ -488,8 +488,8 @@ export default function ExportPage() {
             <td>${entry.notes || "-"}</td>
           </tr>
         `;
-                })
-                .join("")}
+        })
+        .join("")}
         ${filteredEntries.length > 50 ? `
           <tr>
             <td colspan="6" style="text-align: center; font-style: italic; color: #64748b;">
@@ -508,207 +508,207 @@ export default function ExportPage() {
 </html>
     `;
 
-        // Open print dialog for PDF
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close();
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
-            toast.success("PDF export opened. Use Print → Save as PDF to download.");
-        } else {
-            toast.error("Please allow popups to export PDF");
-        }
-    };
+    // Open print dialog for PDF
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+      toast.success("PDF export opened. Use Print → Save as PDF to download.");
+    } else {
+      toast.error("Please allow popups to export PDF");
+    }
+  };
 
-    const downloadFile = (content: string, filename: string, type: string) => {
-        const blob = new Blob([content], { type });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
+  const downloadFile = (content: string, filename: string, type: string) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
-    const filteredCount = getFilteredEntries().length;
+  const filteredCount = getFilteredEntries().length;
 
-    return (
-        <div className="p-6 space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold">Export</h1>
-                <p className="text-muted-foreground">
-                    Export your habit data as CSV or PDF
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Export</h1>
+        <p className="text-muted-foreground">
+          Export your habit data as CSV or PDF
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Filters Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+            <CardDescription>
+              Select date range and habits to export
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Date Range */}
+            <div className="space-y-4">
+              <Label>Date Range</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal flex-1",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "MMM d, yyyy") : "Start date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="hidden sm:flex items-center text-muted-foreground">to</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal flex-1",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Habit Selection */}
+            <div className="space-y-4">
+              <Label>Habits</Label>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={selectAll}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <label
+                    htmlFor="select-all"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    All habits
+                  </label>
+                </div>
+                <div className="pl-4 space-y-2">
+                  {habits?.map((habit) => (
+                    <div key={habit._id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={habit._id}
+                        checked={selectAll || selectedHabits.includes(habit._id)}
+                        onCheckedChange={(checked) =>
+                          handleHabitToggle(habit._id, checked as boolean)
+                        }
+                        disabled={selectAll}
+                      />
+                      <label
+                        htmlFor={habit._id}
+                        className="text-sm cursor-pointer flex items-center gap-2"
+                      >
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: habit.color }}
+                        />
+                        {habit.title}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                {filteredCount} entries match your filters
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Export Options */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Options
+            </CardTitle>
+            <CardDescription>Choose your preferred format</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              className="w-full justify-start h-auto py-4"
+              variant="outline"
+              onClick={exportAsCSV}
+              disabled={filteredCount === 0}
+            >
+              <FileSpreadsheet className="mr-3 h-6 w-6 text-green-600" />
+              <div className="text-left">
+                <p className="font-medium">Export as CSV</p>
+                <p className="text-sm text-muted-foreground">
+                  Spreadsheet format, works with Excel
                 </p>
-            </div>
+              </div>
+            </Button>
 
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Filters Card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Filter className="h-5 w-5" />
-                            Filters
-                        </CardTitle>
-                        <CardDescription>
-                            Select date range and habits to export
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Date Range */}
-                        <div className="space-y-4">
-                            <Label>Date Range</Label>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className={cn(
-                                                "justify-start text-left font-normal flex-1",
-                                                !startDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {startDate ? format(startDate, "MMM d, yyyy") : "Start date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={startDate}
-                                            onSelect={setStartDate}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <span className="hidden sm:flex items-center text-muted-foreground">to</span>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className={cn(
-                                                "justify-start text-left font-normal flex-1",
-                                                !endDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={endDate}
-                                            onSelect={setEndDate}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                        </div>
+            <Button
+              className="w-full justify-start h-auto py-4"
+              variant="outline"
+              onClick={exportAsPDF}
+              disabled={filteredCount === 0}
+            >
+              <FileText className="mr-3 h-6 w-6 text-red-600" />
+              <div className="text-left">
+                <p className="font-medium">Export as PDF</p>
+                <p className="text-sm text-muted-foreground">
+                  Printable document format
+                </p>
+              </div>
+            </Button>
 
-                        {/* Habit Selection */}
-                        <div className="space-y-4">
-                            <Label>Habits</Label>
-                            <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="select-all"
-                                        checked={selectAll}
-                                        onCheckedChange={handleSelectAll}
-                                    />
-                                    <label
-                                        htmlFor="select-all"
-                                        className="text-sm font-medium cursor-pointer"
-                                    >
-                                        All habits
-                                    </label>
-                                </div>
-                                <div className="pl-4 space-y-2">
-                                    {habits?.map((habit) => (
-                                        <div key={habit._id} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={habit._id}
-                                                checked={selectAll || selectedHabits.includes(habit._id)}
-                                                onCheckedChange={(checked) =>
-                                                    handleHabitToggle(habit._id, checked as boolean)
-                                                }
-                                                disabled={selectAll}
-                                            />
-                                            <label
-                                                htmlFor={habit._id}
-                                                className="text-sm cursor-pointer flex items-center gap-2"
-                                            >
-                                                <div
-                                                    className="h-2 w-2 rounded-full"
-                                                    style={{ backgroundColor: habit.color }}
-                                                />
-                                                {habit.title}
-                                            </label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="pt-4 border-t">
-                            <p className="text-sm text-muted-foreground">
-                                {filteredCount} entries match your filters
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Export Options */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Download className="h-5 w-5" />
-                            Export Options
-                        </CardTitle>
-                        <CardDescription>Choose your preferred format</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Button
-                            className="w-full justify-start h-auto py-4"
-                            variant="outline"
-                            onClick={exportAsCSV}
-                            disabled={filteredCount === 0}
-                        >
-                            <FileSpreadsheet className="mr-3 h-6 w-6 text-green-600" />
-                            <div className="text-left">
-                                <p className="font-medium">Export as CSV</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Spreadsheet format, works with Excel
-                                </p>
-                            </div>
-                        </Button>
-
-                        <Button
-                            className="w-full justify-start h-auto py-4"
-                            variant="outline"
-                            onClick={exportAsPDF}
-                            disabled={filteredCount === 0}
-                        >
-                            <FileText className="mr-3 h-6 w-6 text-red-600" />
-                            <div className="text-left">
-                                <p className="font-medium">Export as PDF</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Printable document format
-                                </p>
-                            </div>
-                        </Button>
-
-                        {filteredCount === 0 && (
-                            <p className="text-sm text-muted-foreground text-center pt-4">
-                                No data matches your filters. Adjust date range or habits.
-                            </p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
+            {filteredCount === 0 && (
+              <p className="text-sm text-muted-foreground text-center pt-4">
+                No data matches your filters. Adjust date range or habits.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
